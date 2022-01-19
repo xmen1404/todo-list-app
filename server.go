@@ -6,6 +6,7 @@ import (
 	"io/ioutil"
 	"net/http"
 
+	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 )
 
@@ -52,6 +53,7 @@ func getTodoList(c *gin.Context) {
 
 func addTaskHandler(c *gin.Context) {
 	nTaskName := c.PostForm("taskname")
+	// fmt.Println("ntaskname=", nTaskName)
 
 	ntodoItem := todoItem{nTaskName, false}
 	currentTodoList = append(currentTodoList, ntodoItem)
@@ -96,10 +98,11 @@ func main() {
 	}
 
 	router := gin.Default()
-	router.GET("/todo-list", getTodoList)
+	router.Use(cors.Default())
+	router.GET("/todo-list/get-task-list", getTodoList)
 	router.POST("/todo-list/remove-task", removeTaskHandler)
 	router.POST("/todo-list/add-task", addTaskHandler)
 	router.POST("todo-list/change-task-status", changeStatusHandler)
 
-	router.Run("localhost:8080")
+	router.Run("localhost:5000")
 }
