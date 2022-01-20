@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import styled from "styled-components"
 import axios from 'axios'
 import SendIcon from '@mui/icons-material/Send';
+import { TaskItem } from '../components/index'
 
 const LayoutWrapper = styled.div`
   position: relative;
@@ -12,12 +13,14 @@ const LayoutWrapper = styled.div`
 const LayoutInnerWrap = styled.div`
   position: relative;
   height: 100%;
-  margin: 25px;
+  // margin: 25px;
+  margin: auto;
+  width: 80%;
+  max-width: 500px;
 `
 
 const AddTaskForm = styled.form`
   position: relative;
-  width: 80%;
   margin: auto;
   display: flex;
   justify-content: center;
@@ -29,7 +32,7 @@ const AddTaskForm = styled.form`
 
 const AddTaskInput = styled.input`
   height: 30px;
-  width: 80%;
+  flex-grow: 1;
   border: none;
   font-size: 20px;
   &:focus {
@@ -41,7 +44,7 @@ const AddTaskButton = styled.button`
   width: 40px;
   height: 40px;
   border: none;
-  background-color: none;
+  background-color: white;
   border-radius: 50%;
   display: flex;
   justify-content: center;
@@ -77,18 +80,21 @@ const TodoList = () => {
     //   body: new FormData( e.target )
     // }).then(response => console.log(response))
     e.preventDefault()
+    e.target.reset()
   }
+
+  
 
   return (
     <LayoutWrapper id="layout-wrapper">
       <LayoutInnerWrap>
-        {/* <AddTaskForm action="http://localhost:5000/todo-list/add-task" method="POST">  */}
         <AddTaskForm onSubmit={submitHandler}> 
           <AddTaskInput type="text" name="taskname"/>  
           <AddTaskButton type="submit">
             <SendIcon />
           </AddTaskButton>
         </AddTaskForm>
+        <TaskItem taskName="bruh" taskStatus={false}/>
       </LayoutInnerWrap>
     </LayoutWrapper>
   )

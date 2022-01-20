@@ -8,9 +8,11 @@ import (
 
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
 )
 
 type todoItem struct {
+	TaskID     string `json:"taskid"`
 	TaskName   string `json:"taskname"`
 	TaskStatus bool   `json:"taskstatus"`
 }
@@ -55,7 +57,7 @@ func addTaskHandler(c *gin.Context) {
 	nTaskName := c.PostForm("taskname")
 	// fmt.Println("ntaskname=", nTaskName)
 
-	ntodoItem := todoItem{nTaskName, false}
+	ntodoItem := todoItem{uuid.New().String(), nTaskName, false}
 	currentTodoList = append(currentTodoList, ntodoItem)
 	if err := saveDB(const_db_file, currentTodoList); err != nil {
 		c.IndentedJSON(http.StatusBadRequest, ntodoItem)
@@ -65,10 +67,10 @@ func addTaskHandler(c *gin.Context) {
 }
 
 func removeTaskHandler(c *gin.Context) {
-	nTaskName := c.PostForm("taskname")
+	nTaskID := c.PostForm("taskid")
 	nTodoList := []todoItem{}
 	for _, item := range currentTodoList {
-		if item.TaskName != nTaskName {
+		if item.TaskID != nTaskID {
 			nTodoList = append(nTodoList, item)
 		}
 	}
@@ -79,10 +81,11 @@ func removeTaskHandler(c *gin.Context) {
 }
 
 func changeStatusHandler(c *gin.Context) {
-	nTaskName := c.PostForm("taskname")
+	nTaskID := c.PostForm("taskid")
 	for idx, item := range currentTodoList {
-		if item.TaskName == nTaskName {
+		if item.TaskName == nTaskID {
 			currentTodoList[idx].TaskStatus = !currentTodoList[idx].TaskStatus
+			break
 		}
 	}
 	saveDB(const_db_file, currentTodoList)
