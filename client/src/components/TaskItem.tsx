@@ -1,19 +1,20 @@
 import { useEffect, useState } from 'react'
 import styled from "styled-components"
 import axios from 'axios'
-import AddTaskIcon from '@mui/icons-material/AddTask';
+import DoneIcon from '@mui/icons-material/Done';
 import DeleteIcon from '@mui/icons-material/Delete';
 
-const TaskItemWrapper = styled.div`
+const TaskItemWrapper = styled.li<{taskStatus: boolean}>`
   position: relative;
   margin: auto;
   margin-top: 15px;
   display: flex;
   justify-content: center;
   align-items: center;
-  border: 1px solid rgb(204, 203, 200);
+  border: 1px solid rgb(104, 103, 100);
   border-radius: 10px;
   padding: 10px;
+  opacity: ${props => props.taskStatus?'0.2':'1'};
 `
 
 const TaskItemName = styled.div`
@@ -24,7 +25,7 @@ const TaskItemControl = styled.button`
   width: 40px;
   height: 40px;
   background-color: white;
-  border: 1px solid rgb(204, 203, 200);
+  border: 1px solid rgb(104, 103, 100);
   border-radius: 50%;
   margin-left: 5px;
 
@@ -45,8 +46,9 @@ const TaskItem = (props: Props) => {
       method: 'post', 
       url: 'http://localhost:5000/todo-list/change-task-status', 
       data: nData
+    }).then(response => {
+      reloadData()
     })
-    reloadData()
   }
 
   const removeTask = () => {
@@ -56,15 +58,18 @@ const TaskItem = (props: Props) => {
       method: 'post', 
       url: 'http://localhost:5000/todo-list/remove-task', 
       data: nData
+    }).then(response => {
+      reloadData()
     })
-    reloadData()
   }
 
   return (
-      <TaskItemWrapper>
-        <TaskItemName>{taskName}</TaskItemName>
+      <TaskItemWrapper taskStatus={taskStatus}>
+        <TaskItemName>
+          {taskStatus ? <s>{taskName}</s> : taskName}
+        </TaskItemName>
         <TaskItemControl onClick={changeTaskStatus}>
-          { taskStatus ? <AddTaskIcon/> : <></> }
+          { taskStatus ? <DoneIcon/> : <></> }
         </TaskItemControl>
         <TaskItemControl onClick={removeTask}>
           <DeleteIcon/>

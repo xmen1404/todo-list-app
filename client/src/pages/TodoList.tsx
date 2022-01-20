@@ -6,8 +6,8 @@ import { TaskItem } from '../components/index'
 
 const LayoutWrapper = styled.div`
   position: relative;
-  width: 100vw;
-  height: calc(var(--vh, 1vh) * 100);
+  // width: 100vw;
+  height: calc(var(--vh, 1vh) * 97);
 `
 
 const LayoutInnerWrap = styled.div`
@@ -17,11 +17,12 @@ const LayoutInnerWrap = styled.div`
   margin: auto;
   width: 80%;
   max-width: 500px;
+  display: flex;
+  flex-direction: column;
 `
 
 const AddTaskForm = styled.form`
   position: relative;
-  margin: auto;
   display: flex;
   justify-content: center;
   align-items: center;
@@ -31,9 +32,10 @@ const AddTaskForm = styled.form`
 `
 
 const AddTaskInput = styled.input`
-  height: 30px;
+  height: 35px;
   flex-grow: 1;
   border: none;
+  border-radius: 10px;
   font-size: 20px;
   &:focus {
     outline: none;
@@ -55,6 +57,18 @@ const AddTaskButton = styled.button`
     cursor: pointer;
   }
 `
+const TaskList = styled.ul`
+  position: relative;
+  padding:0px;
+  height: 5%;
+  flex-grow: 1;
+  overflow: scroll;
+  &::-webkit-scrollbar {
+    display: none;
+  }
+  -ms-overflow-style: none;  /* IE and Edge */
+  scrollbar-width: none;  /* Firefox */
+`
 
 const TodoList = () => {
 
@@ -66,10 +80,12 @@ const TodoList = () => {
       url: 'http://localhost:5000/todo-list/add-task', 
       data: new FormData( e.target )
     })
-    .then(response => console.log(response))
+    .then(response => {
+      console.log(response)
+      loadData()
+    })
     e.preventDefault()
     e.target.reset()
-    loadData()
   }
 
   const loadData = () => {
@@ -101,15 +117,17 @@ const TodoList = () => {
             <SendIcon />
           </AddTaskButton>
         </AddTaskForm>
-        {
-          todoListData?.map((item: TodoItem) => (
-            <TaskItem 
-              taskID={item.taskid} 
-              taskName={item.taskname} 
-              taskStatus={item.taskstatus}
-              reloadData={loadData}/>
-          ))
-        }
+        <TaskList>
+          {
+            todoListData?.map((item: TodoItem) => (
+              <TaskItem 
+                taskID={item.taskid} 
+                taskName={item.taskname} 
+                taskStatus={item.taskstatus}
+                reloadData={loadData}/>
+            ))
+          }
+        </TaskList>
       </LayoutInnerWrap>
     </LayoutWrapper>
   )
