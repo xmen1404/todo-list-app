@@ -58,32 +58,39 @@ const AddTaskButton = styled.button`
 
 const TodoList = () => {
 
-  useEffect(() => {
-    const vh = window.innerHeight * 0.01;
-    document.getElementById("layout-wrapper")!.style.setProperty('--vh', `${vh}px`)
-  }, [])
+  const [todoListData, setTodoListData] = useState<[TodoItem]|null>(null)
 
   const submitHandler = (e: any) => {
-    // console.log(e.target[0].value)
-    // var temp = new FormData( e.target )
-    // console.log(temp.get('taskname'))
-    // axios.post("", temp)
     axios({
       method: 'post', 
       url: 'http://localhost:5000/todo-list/add-task', 
       data: new FormData( e.target )
     })
     .then(response => console.log(response))
-    // fetch("http://localhost:5000/todo-list/add-task", {
-    //   method: 'POST', 
-    //   mode: 'no-cors',
-    //   body: new FormData( e.target )
-    // }).then(response => console.log(response))
     e.preventDefault()
     e.target.reset()
+    loadData()
   }
 
-  
+  const loadData = () => {
+    axios({
+      method: 'get', 
+      url: 'http://localhost:5000/todo-list/get-task-list'
+    })
+    .then(response => {
+      setTodoListData(response.data.todolist)
+    })
+    .catch(err => {
+      console.log(err)
+    })
+  }
+
+  useEffect(() => {
+    const vh = window.innerHeight * 0.01;
+    document.getElementById("layout-wrapper")!.style.setProperty('--vh', `${vh}px`)
+
+    loadData()
+  }, [])
 
   return (
     <LayoutWrapper id="layout-wrapper">
@@ -94,10 +101,29 @@ const TodoList = () => {
             <SendIcon />
           </AddTaskButton>
         </AddTaskForm>
-        <TaskItem taskName="bruh" taskStatus={false}/>
+        {
+          todoListData?.map((item: TodoItem) => (
+            <TaskItem 
+              taskID={item.taskid} 
+              taskName={item.taskname} 
+              taskStatus={item.taskstatus}
+              reloadData={loadData}/>
+          ))
+        }
       </LayoutInnerWrap>
     </LayoutWrapper>
   )
 }
 
+type TodoItem = {
+  taskid: string, 
+  taskname: string, 
+  taskstatus: boolean
+}
+
+type TodoListData = {
+  todolist: [TodoItem]
+}
+
 export default TodoList
+

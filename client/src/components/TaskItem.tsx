@@ -36,19 +36,37 @@ const TaskItemControl = styled.button`
 
 const TaskItem = (props: Props) => {
 
-  const { taskName, taskStatus } = props 
+  const { taskID, taskName, taskStatus, reloadData } = props 
 
   const changeTaskStatus = () => {
-    
+    var nData = new FormData()
+    nData.append('taskid', taskID)
+    axios({
+      method: 'post', 
+      url: 'http://localhost:5000/todo-list/change-task-status', 
+      data: nData
+    })
+    reloadData()
+  }
+
+  const removeTask = () => {
+    var nData = new FormData()
+    nData.append('taskid', taskID)
+    axios({
+      method: 'post', 
+      url: 'http://localhost:5000/todo-list/remove-task', 
+      data: nData
+    })
+    reloadData()
   }
 
   return (
       <TaskItemWrapper>
         <TaskItemName>{taskName}</TaskItemName>
-        <TaskItemControl>
+        <TaskItemControl onClick={changeTaskStatus}>
           { taskStatus ? <AddTaskIcon/> : <></> }
         </TaskItemControl>
-        <TaskItemControl>
+        <TaskItemControl onClick={removeTask}>
           <DeleteIcon/>
         </TaskItemControl>
       </TaskItemWrapper>
@@ -58,6 +76,8 @@ const TaskItem = (props: Props) => {
 export default TaskItem
 
 type Props = {
+  taskID: string,
   taskName: string, 
-  taskStatus: boolean
+  taskStatus: boolean, 
+  reloadData: () => void
 }

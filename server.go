@@ -83,7 +83,7 @@ func removeTaskHandler(c *gin.Context) {
 func changeStatusHandler(c *gin.Context) {
 	nTaskID := c.PostForm("taskid")
 	for idx, item := range currentTodoList {
-		if item.TaskName == nTaskID {
+		if item.TaskID == nTaskID {
 			currentTodoList[idx].TaskStatus = !currentTodoList[idx].TaskStatus
 			break
 		}
