@@ -44,7 +44,7 @@ const TaskItem = (props: Props) => {
     nData.append('taskid', taskID)
     axios({
       method: 'post', 
-      url: 'http://localhost:5000/todo-list/change-task-status', 
+      url: 'http://localhost:8000/todo-list/change-task-status', 
       data: nData
     }).then(response => {
       reloadData()
@@ -56,7 +56,7 @@ const TaskItem = (props: Props) => {
     nData.append('taskid', taskID)
     axios({
       method: 'post', 
-      url: 'http://localhost:5000/todo-list/remove-task', 
+      url: 'http://localhost:8000/todo-list/remove-task', 
       data: nData
     }).then(response => {
       reloadData()

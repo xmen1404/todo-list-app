@@ -3,6 +3,7 @@ import styled from "styled-components"
 import axios from 'axios'
 import SendIcon from '@mui/icons-material/Send';
 import { TaskItem } from '../components/index'
+import { Navigate } from 'react-router-dom'
 
 const LayoutWrapper = styled.div`
   position: relative;
@@ -77,12 +78,21 @@ const TodoList = () => {
   const submitHandler = (e: any) => {
     axios({
       method: 'post', 
-      url: 'http://localhost:5000/todo-list/add-task', 
+      url: 'http://localhost:8000/todo-list/add-task', 
       data: new FormData( e.target )
     })
     .then(response => {
       console.log(response)
       loadData()
+    })
+    .catch(err => {
+      if(err.response) {
+        console.log(err.response.status == 403) 
+      } else if(err.request) {
+        console.log("server did not responded")
+      } else {
+        console.log("error in settings before request")
+      }
     })
     e.preventDefault()
     e.target.reset()
@@ -91,16 +101,37 @@ const TodoList = () => {
   const loadData = () => {
     axios({
       method: 'get', 
-      url: 'http://localhost:5000/todo-list/get-task-list'
+      url: 'http://localhost:8000/todo-list/get-task-list'
     })
     .then(response => {
       setTodoListData(response.data.todolist)
     })
     .catch(err => {
-      console.log(err)
+      if(err.response) {
+        console.log(err.response.status == 403) 
+      } else if(err.request) {
+        console.log("server did not responded")
+      } else {
+        console.log("error in settings before request")
+      }
     })
   }
 
+  const authUser = () => {
+    let result = false
+    axios({
+      method: 'get', 
+      url: 'http://localhost:8000/todo-list/get-task-list'
+    })
+    .then(response => {
+      result = true
+    })
+    .catch(err => {
+      result = false 
+    })
+    return result
+  }
+ 
   useEffect(() => {
     const vh = window.innerHeight * 0.01;
     document.getElementById("layout-wrapper")!.style.setProperty('--vh', `${vh}px`)
@@ -108,29 +139,33 @@ const TodoList = () => {
     loadData()
   }, [])
 
-  return (
-    <LayoutWrapper id="layout-wrapper">
-      <LayoutInnerWrap>
-        <AddTaskForm onSubmit={submitHandler}> 
-          <AddTaskInput type="text" name="taskname"/>  
-          <AddTaskButton type="submit">
-            <SendIcon />
-          </AddTaskButton>
-        </AddTaskForm>
-        <TaskList>
-          {
-            todoListData?.map((item: TodoItem) => (
-              <TaskItem 
-                taskID={item.taskid} 
-                taskName={item.taskname} 
-                taskStatus={item.taskstatus}
-                reloadData={loadData}/>
-            ))
-          }
-        </TaskList>
-      </LayoutInnerWrap>
-    </LayoutWrapper>
-  )
+  if(authUser()) {
+    return (
+      <LayoutWrapper id="layout-wrapper">
+        <LayoutInnerWrap>
+          <AddTaskForm onSubmit={submitHandler}> 
+            <AddTaskInput type="text" name="taskname"/>  
+            <AddTaskButton type="submit">
+              <SendIcon />
+            </AddTaskButton>
+          </AddTaskForm>
+          <TaskList>
+            {
+              todoListData?.map((item: TodoItem) => (
+                <TaskItem 
+                  taskID={item.taskid} 
+                  taskName={item.taskname} 
+                  taskStatus={item.taskstatus}
+                  reloadData={loadData}/>
+              ))
+            }
+          </TaskList>
+        </LayoutInnerWrap>
+      </LayoutWrapper>
+    )
+  } else {
+    return <Navigate to='/' /> 
+  }
 }
 
 type TodoItem = {
