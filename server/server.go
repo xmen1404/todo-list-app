@@ -72,20 +72,23 @@ func loadTaskList(userId string) ([]todoItem, error) {
 	return taskData, err
 }
 
-func authMiddleware(c *gin.Context) {
+func corsAcessMiddleware(c *gin.Context) {
 	c.Writer.Header().Set("Access-Control-Allow-Origin", "http://localhost:3000")
 	c.Writer.Header().Set("Access-Control-Allow-Credentials", "true")
+}
+
+func authMiddleware(c *gin.Context) {
 	authToken, errAuth := c.Cookie("authToken")
 	fmt.Println(authToken)
 	if errAuth != nil {
 		fmt.Println(errAuth.Error(), "cookie error")
-		c.String(http.StatusForbidden, "cookie error")
+		c.AbortWithStatus(http.StatusForbidden)
 	}
 
 	rows, err := db.Query("SELECT * FROM userInfo WHERE id == '" + authToken + "';")
 	if err != nil {
 		fmt.Println(err.Error(), "error in query userInfo")
-		c.String(http.StatusForbidden, "userId not found")
+		c.AbortWithStatus(http.StatusForbidden)
 	}
 	defer rows.Close()
 
@@ -113,6 +116,7 @@ func processDbStmt(statement string) error {
 }
 
 func addTaskHandler(c *gin.Context) {
+	fmt.Println("passed authProcess")
 	authToken, _ := c.Cookie("authToken") // error checked in authMiddleware
 	nTaskName := c.PostForm("taskname")
 	nTaskId := uuid.New().String()
@@ -169,7 +173,7 @@ func loginHandler(c *gin.Context) {
 		rows.Next()
 		var userId, nUsername, nPassword string
 		rows.Scan(&userId, &nUsername, &nPassword)
-		fmt.Println(userId, nUsername, nPassword, "sdfsdfsdfsdfd")
+		fmt.Println(userId, nUsername, nPassword)
 		c.SetCookie("authToken", userId, 1800, "/", "localhost", true, true)
 		c.String(http.StatusAccepted, "Login successfully")
 	}
@@ -232,13 +236,24 @@ func main() {
 	corsConfig.AllowHeaders = []string{"Access-Control-Allow-Credentials", "Access-Control-Allow-Origin"}
 
 	router.Use(cors.New(corsConfig))
-	router.Use(authMiddleware)
+	// router.Use(authMiddleware)
+	router.Use(corsAcessMiddleware)
 	router.POST("/register", registerHandler)
 	router.POST("/login", loginHandler)
-	router.GET("/todo-list/get-task-list", getTodoList)
-	router.POST("/todo-list/remove-task", removeTaskHandler)
-	router.POST("/todo-list/add-task", addTaskHandler)
-	router.POST("todo-list/change-task-status", changeStatusHandler)
+
+	todoListRoutes := router.Group("/todo-list")
+	todoListRoutes.Use(authMiddleware)
+	{
+		todoListRoutes.GET("/get-task-list", getTodoList)
+		todoListRoutes.POST("/remove-task", removeTaskHandler)
+		todoListRoutes.POST("/add-task", addTaskHandler)
+		todoListRoutes.POST("/change-task-status", changeStatusHandler)
+	}
+	// todoListRoutes.Use(authMiddleware)
+	// router.GET("/todo-list/get-task-list", getTodoList)
+	// router.POST("/todo-list/remove-task", removeTaskHandler)
+	// router.POST("/todo-list/add-task", addTaskHandler)
+	// router.POST("todo-list/change-task-status", changeStatusHandler)
 
 	router.Run("localhost:8000")
 }
