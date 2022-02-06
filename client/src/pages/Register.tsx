@@ -4,13 +4,13 @@ import axios from 'axios'
 import { useNavigate } from 'react-router-dom'
 
 
-const LoginWrapper = styled.div`
+const RegisterWrapper = styled.div`
   position: relative;
   // width: 100vw;
   height: calc(var(--vh, 1vh) * 97);
 `
 
-const LoginInnerWrap = styled.div`
+const RegisterInnerWrap = styled.div`
     position: relative;
     display: flex;
     flex-direction: column;
@@ -18,20 +18,20 @@ const LoginInnerWrap = styled.div`
     padding-top: 150px;
 `
 
-const LoginBanner = styled.div`
+const RegisterBanner = styled.div`
     font-size: 40px;
     font-weight: 700;
     color: #37b24d;
 `
 
-const LoginForm = styled.form`
+const RegisterForm = styled.form`
     position: relative;
     display: flex;
     flex-direction: column;
     align-items: center;
 `
 
-const LoginInput = styled.input`
+const RegisterInput = styled.input`
     height: 35px;
     padding: 10px;
     margin-top: 20px;
@@ -57,13 +57,9 @@ const SubmitButton = styled.button`
   }
 `
 
-const RegisterLink = styled.a`
-  margin-top: 30px;
-  font-size: 15px;
-`
 
 
-const Login = () => {
+const Register = () => {
 
     const navigate = useNavigate()
 
@@ -76,42 +72,36 @@ const Login = () => {
         e.preventDefault()
         axios({
             method: 'post', 
-            url: 'http://localhost:8000/login', 
+            url: 'http://localhost:8000/register', 
             data: new FormData( e.target ), 
             withCredentials: true
           })
         .then(response => {
             console.log(response)
             e.target.reset()
-            navigate("/todo-list")
+            alert("Account created successfully")
+            navigate("/login")
         })
         .catch(err => {
-            if(err.response) {
-              console.log(err.response.status == 403) 
-            } else if(err.request) {
-              console.log("server did not responded")
-            } else {  
-              console.log("error in settings before request")
-            }
-            alert("Wrong username or password")
+            console.log(err.Error())
+            alert("Username duplicated. Try other ones!")
           })
     }
 
     return (
-        <LoginWrapper id="layout-wrapper">
-            <LoginInnerWrap>
-                <LoginBanner>Login</LoginBanner>
-                <LoginForm onSubmit={submitHandler}>
-                    <LoginInput placeholder='username' type='text' name='username'/>
-                    <LoginInput placeholder='password' type='password' name='password'/>
+        <RegisterWrapper id="layout-wrapper">
+            <RegisterInnerWrap>
+                <RegisterBanner>Register</RegisterBanner>
+                <RegisterForm onSubmit={submitHandler}>
+                    <RegisterInput placeholder='username' type='text' name='username'/>
+                    <RegisterInput placeholder='password' type='password' name='password'/>
                     {/* <LoginInput type='submit' name='password'></LoginInput> */}
-                    <SubmitButton>Login</SubmitButton>
-                </LoginForm>
-                <RegisterLink href="/register">Click here to register!</RegisterLink>
-            </LoginInnerWrap>
-        </LoginWrapper>
+                    <SubmitButton>Submit</SubmitButton>
+                </RegisterForm>
+            </RegisterInnerWrap>
+        </RegisterWrapper>
     )
 }
 
-export default Login
+export default Register
 

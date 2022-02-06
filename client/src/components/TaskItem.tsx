@@ -45,9 +45,13 @@ const TaskItem = (props: Props) => {
     axios({
       method: 'post', 
       url: 'http://localhost:8000/todo-list/change-task-status', 
-      data: nData
+      data: nData,
+      withCredentials: true, 
     }).then(response => {
       reloadData()
+    })
+    .catch(err => {
+      
     })
   }
 
@@ -57,7 +61,8 @@ const TaskItem = (props: Props) => {
     axios({
       method: 'post', 
       url: 'http://localhost:8000/todo-list/remove-task', 
-      data: nData
+      data: nData,
+      withCredentials: true, 
     }).then(response => {
       reloadData()
     })

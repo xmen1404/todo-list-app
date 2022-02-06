@@ -27,7 +27,8 @@ type todoListStruct struct {
 var currentTodoList []todoItem = []todoItem{}
 var const_db_file string = "db.json"
 var db *sql.DB
-var userInfo map[string]string
+
+// var userInfo map[string]string // temporary userId tracker
 
 func stringToInt(stVal string) int {
 	intVal, err := strconv.Atoi(stVal)
@@ -49,9 +50,9 @@ func loadTaskList(userId string) ([]todoItem, error) {
 	// taskName
 	// taskStatus
 
-	row, err := db.Query("SELECT * FROM taskInfo WHERE userId == " + "'" + userId + "'")
+	row, err := db.Query("SELECT * FROM taskInfo WHERE userId == '" + userId + "';")
 	if err != nil {
-		fmt.Println(err.Error())
+		fmt.Println(err.Error(), "load task list error")
 		return []todoItem{}, err
 	}
 
@@ -64,38 +65,37 @@ func loadTaskList(userId string) ([]todoItem, error) {
 		if taskStatus == 1 {
 			taskStatusB = true
 		}
+		fmt.Println("checking loadTaskList: ", taskId, taskName, taskStatusB)
 		taskData = append(taskData, todoItem{taskId, taskName, taskStatusB})
 	}
 
 	return taskData, err
 }
 
-// func saveDB(filename string, data []todoItem) error {
-// 	ndata, err := json.MarshalIndent(todoListStruct{data}, "", " ")
-// 	if err != nil {
-// 		return err
-// 	}
-
-// 	return ioutil.WriteFile(filename, ndata, 0644)
-// }
-
 func getAuth(c *gin.Context) (string, error) { // AuthToken = userId
 	authToken, errAuth := c.Cookie("authToken")
+	fmt.Println(authToken)
 	if errAuth != nil {
-		fmt.Println(errAuth.Error())
+		fmt.Println(errAuth.Error(), "cookie error")
 		return "", errAuth
 	}
 
-	_, exists := userInfo[authToken]
-	if !exists {
-		fmt.Println("access denied")
+	_, err := db.Query("SELECT * FROM userInfo WHERE id == '" + authToken + "';")
+	if err != nil {
+		fmt.Println(err.Error(), "error in query userInfo")
 		return "", errAuth
 	}
+	// if rows == nil {
+	// 	fmt.Println("access denied")
+
+	// }
 	return authToken, nil
 }
 
 func getTodoList(c *gin.Context) {
 	authToken, errAuth := getAuth(c)
+	c.Writer.Header().Set("Access-Control-Allow-Origin", "http://localhost:3000")
+	c.Writer.Header().Set("Access-Control-Allow-Credentials", "true")
 	if errAuth != nil {
 		c.JSON(http.StatusForbidden, todoListStruct{})
 		return
@@ -119,6 +119,8 @@ func processDbStmt(statement string) error {
 
 func addTaskHandler(c *gin.Context) {
 	authToken, errAuth := getAuth(c)
+	c.Writer.Header().Set("Access-Control-Allow-Origin", "http://localhost:3000")
+	c.Writer.Header().Set("Access-Control-Allow-Credentials", "true")
 	if errAuth != nil {
 		c.JSON(http.StatusForbidden, todoListStruct{})
 		return
@@ -128,9 +130,9 @@ func addTaskHandler(c *gin.Context) {
 	nTaskId := uuid.New().String()
 	nTaskStatus := "0"
 
-	err := processDbStmt("INSERT INTO taskInfo VALUES (" + nTaskId + "," + authToken + "," + nTaskName + "," + nTaskStatus + ")")
+	err := processDbStmt("INSERT INTO taskInfo VALUES ('" + nTaskId + "','" + authToken + "','" + nTaskName + "','" + nTaskStatus + "');")
 	if err != nil {
-		fmt.Println(err.Error())
+		fmt.Println(err.Error(), "error with inserting to db")
 		c.String(http.StatusBadRequest, "Cannot add task")
 		return
 	}
@@ -140,6 +142,8 @@ func addTaskHandler(c *gin.Context) {
 
 func removeTaskHandler(c *gin.Context) {
 	authToken, errAuth := getAuth(c)
+	c.Writer.Header().Set("Access-Control-Allow-Origin", "http://localhost:3000")
+	c.Writer.Header().Set("Access-Control-Allow-Credentials", "true")
 	if errAuth != nil {
 		c.JSON(http.StatusForbidden, todoListStruct{})
 		return
@@ -148,7 +152,7 @@ func removeTaskHandler(c *gin.Context) {
 	nTaskID := c.PostForm("taskid")
 	err := processDbStmt("DELETE FROM taskInfo WHERE id == '" + nTaskID + "' AND userId == '" + authToken + "'")
 	if err != nil {
-		fmt.Println(err.Error())
+		fmt.Println(err.Error(), "error with deleting from db")
 		c.String(http.StatusBadRequest, "Cannot delete task")
 		return
 	}
@@ -158,6 +162,8 @@ func removeTaskHandler(c *gin.Context) {
 
 func changeStatusHandler(c *gin.Context) {
 	authToken, errAuth := getAuth(c)
+	c.Writer.Header().Set("Access-Control-Allow-Origin", "http://localhost:3000")
+	c.Writer.Header().Set("Access-Control-Allow-Credentials", "true")
 	if errAuth != nil {
 		c.JSON(http.StatusForbidden, todoListStruct{})
 		return
@@ -167,11 +173,59 @@ func changeStatusHandler(c *gin.Context) {
 
 	err := processDbStmt("UPDATE taskInfo SET taskStatus = 1 - (SELECT taskStatus FROM taskInfo WHERE id == '" + nTaskID + "' AND userId == '" + authToken + "') " + "WHERE id == '" + nTaskID + "' AND userId == '" + authToken + "'")
 	if err != nil {
-		fmt.Println(err.Error())
+		fmt.Println(err.Error(), "error with updating db")
 		c.String(http.StatusBadRequest, "Cannot delete task")
 		return
 	}
 	c.String(http.StatusCreated, "Change task status successfully")
+}
+
+func loginHandler(c *gin.Context) {
+	fmt.Println("passed here")
+	c.Writer.Header().Set("Access-Control-Allow-Origin", "http://localhost:3000")
+	c.Writer.Header().Set("Access-Control-Allow-Credentials", "true")
+	username := c.PostForm("username")
+	password := c.PostForm("password")
+
+	rows, err := db.Query("SELECT * FROM userInfo WHERE username == " + "'" + username + "' AND password == '" + password + "';")
+	if err != nil {
+		fmt.Println(err.Error(), "error with Select command")
+		c.String(http.StatusBadRequest, "Login failed")
+	}
+	if rows == nil {
+		c.String(http.StatusBadRequest, "Login failed")
+	} else {
+		rows.Next()
+		var userId, nUsername, nPassword string
+		rows.Scan(&userId, &nUsername, &nPassword)
+		fmt.Println(userId, nUsername, nPassword, "sdfsdfsdfsdfd")
+		c.SetCookie("authToken", userId, 1800, "/", "localhost", true, true)
+		c.String(http.StatusAccepted, "Login successfully")
+	}
+}
+
+func registerHandler(c *gin.Context) {
+	username := c.PostForm("username")
+	password := c.PostForm("password")
+	c.Writer.Header().Set("Access-Control-Allow-Origin", "http://localhost:3000")
+	c.Writer.Header().Set("Access-Control-Allow-Credentials", "true")
+
+	// fmt.Println(username, password)
+	// c.String(http.StatusBadRequest, "wrong")
+	rows, _ := db.Query("SELECT * FROM userInfo WHERE username == " + "'" + username + "';")
+	if rows != nil && rows.Next() {
+		c.String(http.StatusBadRequest, "Username duplicated")
+		fmt.Print("username duplicated", rows.Next())
+	} else {
+		userId := uuid.New().String()
+		err := processDbStmt("INSERT INTO userInfo VALUES ('" + userId + "','" + username + "','" + password + "');")
+		if err != nil {
+			fmt.Println(err.Error(), "error with insert registration info")
+			c.String(http.StatusBadRequest, "Cannot create account")
+			return
+		}
+		c.String(http.StatusCreated, "Account created successfully")
+	}
 }
 
 func main() {
@@ -186,19 +240,31 @@ func main() {
 		fmt.Println(err.Error())
 		return
 	}
-	err = processDbStmt("CREATE TABLE IF NOT EXISTS userInfo (id INT PRIMARY KEY, userName TEXT, password TEXT);")
+	fmt.Println("Connected to sqlite database")
+	defer db.Close()
+
+	err = processDbStmt("CREATE TABLE IF NOT EXISTS userInfo(id TEXT PRIMARY KEY NOT NULL, username TEXT NOT NULL, password TEXT NOT NULL);")
 	if err != nil {
 		fmt.Println(err.Error())
 		return
 	}
-	err = processDbStmt("CREATE TABLE IF NOT EXISTS taskInfo (id INT PRIMARY KEY, userId INT, taskName TEXT, taskStatus INT);")
+	fmt.Println("UserInfo Table created")
+	err = processDbStmt("CREATE TABLE IF NOT EXISTS taskInfo(id TEXT PRIMARY KEY NOT NULL, userId TEXT NOT NULL, taskName TEXT NOT NULL, taskStatus INT NOT NULL);")
 	if err != nil {
 		fmt.Println(err.Error())
 		return
 	}
+	fmt.Println("TaskInfo table created")
 
 	router := gin.Default()
-	router.Use(cors.Default())
+
+	corsConfig := cors.DefaultConfig()
+	corsConfig.AllowOrigins = []string{"http://localhost:3000"}
+	corsConfig.AllowHeaders = []string{"Access-Control-Allow-Credentials", "Access-Control-Allow-Origin", "Cookie"}
+
+	router.Use(cors.New(corsConfig))
+	router.POST("/register", registerHandler)
+	router.POST("/login", loginHandler)
 	router.GET("/todo-list/get-task-list", getTodoList)
 	router.POST("/todo-list/remove-task", removeTaskHandler)
 	router.POST("/todo-list/add-task", addTaskHandler)

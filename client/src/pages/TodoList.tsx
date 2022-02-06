@@ -3,7 +3,7 @@ import styled from "styled-components"
 import axios from 'axios'
 import SendIcon from '@mui/icons-material/Send';
 import { TaskItem } from '../components/index'
-import { Navigate } from 'react-router-dom'
+import { Navigate, useNavigate } from 'react-router-dom'
 
 const LayoutWrapper = styled.div`
   position: relative;
@@ -74,12 +74,15 @@ const TaskList = styled.ul`
 const TodoList = () => {
 
   const [todoListData, setTodoListData] = useState<[TodoItem]|null>(null)
+  const navigate = useNavigate()
 
   const submitHandler = (e: any) => {
     axios({
       method: 'post', 
       url: 'http://localhost:8000/todo-list/add-task', 
-      data: new FormData( e.target )
+      data: new FormData( e.target ), 
+      withCredentials: true, 
+      // headers:{Cookie:"029857ec-10c3-4ad3-881b-b82ebf3c9683"}
     })
     .then(response => {
       console.log(response)
@@ -93,6 +96,7 @@ const TodoList = () => {
       } else {
         console.log("error in settings before request")
       }
+      navigate('/login')
     })
     e.preventDefault()
     e.target.reset()
@@ -101,10 +105,13 @@ const TodoList = () => {
   const loadData = () => {
     axios({
       method: 'get', 
-      url: 'http://localhost:8000/todo-list/get-task-list'
+      url: 'http://localhost:8000/todo-list/get-task-list', 
+      // headers: { Access-Control-Allow-Origin: "https://amazing.site"}
+      withCredentials: true
     })
     .then(response => {
       setTodoListData(response.data.todolist)
+      console.log(todoListData?.length)
     })
     .catch(err => {
       if(err.response) {
@@ -114,22 +121,8 @@ const TodoList = () => {
       } else {
         console.log("error in settings before request")
       }
+      navigate('/login')
     })
-  }
-
-  const authUser = () => {
-    let result = false
-    axios({
-      method: 'get', 
-      url: 'http://localhost:8000/todo-list/get-task-list'
-    })
-    .then(response => {
-      result = true
-    })
-    .catch(err => {
-      result = false 
-    })
-    return result
   }
  
   useEffect(() => {
@@ -139,33 +132,29 @@ const TodoList = () => {
     loadData()
   }, [])
 
-  if(authUser()) {
-    return (
-      <LayoutWrapper id="layout-wrapper">
-        <LayoutInnerWrap>
-          <AddTaskForm onSubmit={submitHandler}> 
-            <AddTaskInput type="text" name="taskname"/>  
-            <AddTaskButton type="submit">
-              <SendIcon />
-            </AddTaskButton>
-          </AddTaskForm>
-          <TaskList>
-            {
-              todoListData?.map((item: TodoItem) => (
-                <TaskItem 
-                  taskID={item.taskid} 
-                  taskName={item.taskname} 
-                  taskStatus={item.taskstatus}
-                  reloadData={loadData}/>
-              ))
-            }
-          </TaskList>
-        </LayoutInnerWrap>
-      </LayoutWrapper>
-    )
-  } else {
-    return <Navigate to='/' /> 
-  }
+  return (
+    <LayoutWrapper id="layout-wrapper">
+      <LayoutInnerWrap>
+        <AddTaskForm onSubmit={submitHandler}> 
+          <AddTaskInput type="text" name="taskname"/>  
+          <AddTaskButton type="submit">
+            <SendIcon />
+          </AddTaskButton>
+        </AddTaskForm>
+        <TaskList>
+          {
+            todoListData?.map((item: TodoItem) => (
+              <TaskItem 
+                taskID={item.taskid} 
+                taskName={item.taskname} 
+                taskStatus={item.taskstatus}
+                reloadData={loadData}/>
+            ))
+          }
+        </TaskList>
+      </LayoutInnerWrap>
+    </LayoutWrapper>
+  )
 }
 
 type TodoItem = {
