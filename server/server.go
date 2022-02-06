@@ -72,35 +72,27 @@ func loadTaskList(userId string) ([]todoItem, error) {
 	return taskData, err
 }
 
-func getAuth(c *gin.Context) (string, error) { // AuthToken = userId
+func authMiddleware(c *gin.Context) {
+	c.Writer.Header().Set("Access-Control-Allow-Origin", "http://localhost:3000")
+	c.Writer.Header().Set("Access-Control-Allow-Credentials", "true")
 	authToken, errAuth := c.Cookie("authToken")
 	fmt.Println(authToken)
 	if errAuth != nil {
 		fmt.Println(errAuth.Error(), "cookie error")
-		return "", errAuth
+		c.String(http.StatusForbidden, "cookie error")
 	}
 
 	_, err := db.Query("SELECT * FROM userInfo WHERE id == '" + authToken + "';")
 	if err != nil {
 		fmt.Println(err.Error(), "error in query userInfo")
-		return "", errAuth
+		c.String(http.StatusForbidden, "userId not found")
 	}
-	// if rows == nil {
-	// 	fmt.Println("access denied")
 
-	// }
-	return authToken, nil
+	c.Next()
 }
 
 func getTodoList(c *gin.Context) {
-	authToken, errAuth := getAuth(c)
-	c.Writer.Header().Set("Access-Control-Allow-Origin", "http://localhost:3000")
-	c.Writer.Header().Set("Access-Control-Allow-Credentials", "true")
-	if errAuth != nil {
-		c.JSON(http.StatusForbidden, todoListStruct{})
-		return
-	}
-
+	authToken, _ := c.Cookie("authToken") // error checked in authMiddleware
 	ndata, err := loadTaskList(authToken)
 	if err != nil {
 		c.IndentedJSON(http.StatusNotFound, todoListStruct{})
@@ -118,14 +110,7 @@ func processDbStmt(statement string) error {
 }
 
 func addTaskHandler(c *gin.Context) {
-	authToken, errAuth := getAuth(c)
-	c.Writer.Header().Set("Access-Control-Allow-Origin", "http://localhost:3000")
-	c.Writer.Header().Set("Access-Control-Allow-Credentials", "true")
-	if errAuth != nil {
-		c.JSON(http.StatusForbidden, todoListStruct{})
-		return
-	}
-
+	authToken, _ := c.Cookie("authToken") // error checked in authMiddleware
 	nTaskName := c.PostForm("taskname")
 	nTaskId := uuid.New().String()
 	nTaskStatus := "0"
@@ -141,14 +126,7 @@ func addTaskHandler(c *gin.Context) {
 }
 
 func removeTaskHandler(c *gin.Context) {
-	authToken, errAuth := getAuth(c)
-	c.Writer.Header().Set("Access-Control-Allow-Origin", "http://localhost:3000")
-	c.Writer.Header().Set("Access-Control-Allow-Credentials", "true")
-	if errAuth != nil {
-		c.JSON(http.StatusForbidden, todoListStruct{})
-		return
-	}
-
+	authToken, _ := c.Cookie("authToken")
 	nTaskID := c.PostForm("taskid")
 	err := processDbStmt("DELETE FROM taskInfo WHERE id == '" + nTaskID + "' AND userId == '" + authToken + "'")
 	if err != nil {
@@ -161,14 +139,7 @@ func removeTaskHandler(c *gin.Context) {
 }
 
 func changeStatusHandler(c *gin.Context) {
-	authToken, errAuth := getAuth(c)
-	c.Writer.Header().Set("Access-Control-Allow-Origin", "http://localhost:3000")
-	c.Writer.Header().Set("Access-Control-Allow-Credentials", "true")
-	if errAuth != nil {
-		c.JSON(http.StatusForbidden, todoListStruct{})
-		return
-	}
-
+	authToken, _ := c.Cookie("authToken")
 	nTaskID := c.PostForm("taskid")
 
 	err := processDbStmt("UPDATE taskInfo SET taskStatus = 1 - (SELECT taskStatus FROM taskInfo WHERE id == '" + nTaskID + "' AND userId == '" + authToken + "') " + "WHERE id == '" + nTaskID + "' AND userId == '" + authToken + "'")
@@ -181,9 +152,6 @@ func changeStatusHandler(c *gin.Context) {
 }
 
 func loginHandler(c *gin.Context) {
-	fmt.Println("passed here")
-	c.Writer.Header().Set("Access-Control-Allow-Origin", "http://localhost:3000")
-	c.Writer.Header().Set("Access-Control-Allow-Credentials", "true")
 	username := c.PostForm("username")
 	password := c.PostForm("password")
 
@@ -207,11 +175,7 @@ func loginHandler(c *gin.Context) {
 func registerHandler(c *gin.Context) {
 	username := c.PostForm("username")
 	password := c.PostForm("password")
-	c.Writer.Header().Set("Access-Control-Allow-Origin", "http://localhost:3000")
-	c.Writer.Header().Set("Access-Control-Allow-Credentials", "true")
 
-	// fmt.Println(username, password)
-	// c.String(http.StatusBadRequest, "wrong")
 	rows, _ := db.Query("SELECT * FROM userInfo WHERE username == " + "'" + username + "';")
 	if rows != nil && rows.Next() {
 		c.String(http.StatusBadRequest, "Username duplicated")
@@ -260,9 +224,10 @@ func main() {
 
 	corsConfig := cors.DefaultConfig()
 	corsConfig.AllowOrigins = []string{"http://localhost:3000"}
-	corsConfig.AllowHeaders = []string{"Access-Control-Allow-Credentials", "Access-Control-Allow-Origin", "Cookie"}
+	corsConfig.AllowHeaders = []string{"Access-Control-Allow-Credentials", "Access-Control-Allow-Origin"}
 
 	router.Use(cors.New(corsConfig))
+	router.Use(authMiddleware)
 	router.POST("/register", registerHandler)
 	router.POST("/login", loginHandler)
 	router.GET("/todo-list/get-task-list", getTodoList)
