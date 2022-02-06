@@ -77,6 +77,7 @@ const TodoList = () => {
   const navigate = useNavigate()
 
   const submitHandler = (e: any) => {
+    e.preventDefault()
     axios({
       method: 'post', 
       url: 'http://localhost:8000/todo-list/add-task', 
@@ -86,20 +87,15 @@ const TodoList = () => {
     })
     .then(response => {
       console.log(response)
+      e.target.reset()
       loadData()
     })
     .catch(err => {
-      if(err.response) {
-        console.log(err.response.status == 403) 
-      } else if(err.request) {
-        console.log("server did not responded")
-      } else {
-        console.log("error in settings before request")
-      }
+      console.log(err)
       navigate('/login')
     })
-    e.preventDefault()
-    e.target.reset()
+    
+    
   }
 
   const loadData = () => {
@@ -111,16 +107,9 @@ const TodoList = () => {
     })
     .then(response => {
       setTodoListData(response.data.todolist)
-      console.log(todoListData?.length)
     })
     .catch(err => {
-      if(err.response) {
-        console.log(err.response.status == 403) 
-      } else if(err.request) {
-        console.log("server did not responded")
-      } else {
-        console.log("error in settings before request")
-      }
+      console.log(err)
       navigate('/login')
     })
   }

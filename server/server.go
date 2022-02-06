@@ -82,11 +82,12 @@ func authMiddleware(c *gin.Context) {
 		c.String(http.StatusForbidden, "cookie error")
 	}
 
-	_, err := db.Query("SELECT * FROM userInfo WHERE id == '" + authToken + "';")
+	rows, err := db.Query("SELECT * FROM userInfo WHERE id == '" + authToken + "';")
 	if err != nil {
 		fmt.Println(err.Error(), "error in query userInfo")
 		c.String(http.StatusForbidden, "userId not found")
 	}
+	defer rows.Close()
 
 	c.Next()
 }
@@ -102,10 +103,12 @@ func getTodoList(c *gin.Context) {
 }
 
 func processDbStmt(statement string) error {
+	fmt.Println(statement)
 	stmt, err := db.Prepare(statement)
 	if err == nil {
 		stmt.Exec()
 	}
+	defer stmt.Close()
 	return err
 }
 
@@ -142,10 +145,10 @@ func changeStatusHandler(c *gin.Context) {
 	authToken, _ := c.Cookie("authToken")
 	nTaskID := c.PostForm("taskid")
 
-	err := processDbStmt("UPDATE taskInfo SET taskStatus = 1 - (SELECT taskStatus FROM taskInfo WHERE id == '" + nTaskID + "' AND userId == '" + authToken + "') " + "WHERE id == '" + nTaskID + "' AND userId == '" + authToken + "'")
+	err := processDbStmt("UPDATE taskInfo SET taskStatus = 1 - (SELECT taskStatus FROM taskInfo WHERE id == '" + nTaskID + "' AND userId == '" + authToken + "') " + "WHERE id == '" + nTaskID + "' AND userId == '" + authToken + "';")
 	if err != nil {
 		fmt.Println(err.Error(), "error with updating db")
-		c.String(http.StatusBadRequest, "Cannot delete task")
+		c.String(http.StatusBadRequest, "Cannot change taskStatus")
 		return
 	}
 	c.String(http.StatusCreated, "Change task status successfully")
@@ -170,6 +173,7 @@ func loginHandler(c *gin.Context) {
 		c.SetCookie("authToken", userId, 1800, "/", "localhost", true, true)
 		c.String(http.StatusAccepted, "Login successfully")
 	}
+	defer rows.Close()
 }
 
 func registerHandler(c *gin.Context) {
@@ -190,6 +194,7 @@ func registerHandler(c *gin.Context) {
 		}
 		c.String(http.StatusCreated, "Account created successfully")
 	}
+	defer rows.Close()
 }
 
 func main() {
