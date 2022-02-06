@@ -3,6 +3,7 @@ import styled from "styled-components"
 import axios from 'axios'
 import SendIcon from '@mui/icons-material/Send';
 import { TaskItem } from '../components/index'
+import { Navigate, useNavigate } from 'react-router-dom'
 
 const LayoutWrapper = styled.div`
   position: relative;
@@ -73,34 +74,46 @@ const TaskList = styled.ul`
 const TodoList = () => {
 
   const [todoListData, setTodoListData] = useState<[TodoItem]|null>(null)
+  const navigate = useNavigate()
 
   const submitHandler = (e: any) => {
+    e.preventDefault()
     axios({
       method: 'post', 
-      url: 'http://localhost:5000/todo-list/add-task', 
-      data: new FormData( e.target )
+      url: 'http://localhost:8000/todo-list/add-task', 
+      data: new FormData( e.target ), 
+      withCredentials: true, 
+      // headers:{Cookie:"029857ec-10c3-4ad3-881b-b82ebf3c9683"}
     })
     .then(response => {
       console.log(response)
+      e.target.reset()
       loadData()
     })
-    e.preventDefault()
-    e.target.reset()
+    .catch(err => {
+      console.log(err)
+      navigate('/login')
+    })
+    
+    
   }
 
   const loadData = () => {
     axios({
       method: 'get', 
-      url: 'http://localhost:5000/todo-list/get-task-list'
+      url: 'http://localhost:8000/todo-list/get-task-list', 
+      // headers: { Access-Control-Allow-Origin: "https://amazing.site"}
+      withCredentials: true
     })
     .then(response => {
       setTodoListData(response.data.todolist)
     })
     .catch(err => {
       console.log(err)
+      navigate('/login')
     })
   }
-
+ 
   useEffect(() => {
     const vh = window.innerHeight * 0.01;
     document.getElementById("layout-wrapper")!.style.setProperty('--vh', `${vh}px`)
