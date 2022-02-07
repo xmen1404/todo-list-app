@@ -6,12 +6,10 @@ In the project directory, you can run:
 
 ### `go run server.go`
 
-Runs the server in the development mode.\
-
-Data is saved in db.json file.\
+Runs the server in the development mode.
 
 ### `cd client` -> `npm start`
 
-Runs the React app in the development mode.\
+Runs the React app in the development mode.
 
 
