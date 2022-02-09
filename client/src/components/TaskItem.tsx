@@ -1,8 +1,10 @@
 import { useEffect, useState } from 'react'
 import styled from "styled-components"
-import axios from 'axios'
+import axiosInstance from '../axiosInstance'
 import DoneIcon from '@mui/icons-material/Done';
 import DeleteIcon from '@mui/icons-material/Delete';
+
+// const { REACT_APP_SERVER_DOMAIN, NODE_ENV } = process.env
 
 const TaskItemWrapper = styled.li<{taskStatus: boolean}>`
   position: relative;
@@ -42,9 +44,9 @@ const TaskItem = (props: Props) => {
   const changeTaskStatus = () => {
     var nData = new FormData()
     nData.append('taskid', taskID)
-    axios({
+    axiosInstance({
       method: 'post', 
-      url: 'http://localhost:8000/todo-list/change-task-status', 
+      url: `/todo-list/change-task-status`, 
       data: nData,
       withCredentials: true, 
     }).then(response => {
@@ -58,9 +60,9 @@ const TaskItem = (props: Props) => {
   const removeTask = () => {
     var nData = new FormData()
     nData.append('taskid', taskID)
-    axios({
+    axiosInstance({
       method: 'post', 
-      url: 'http://localhost:8000/todo-list/remove-task', 
+      url: `/todo-list/remove-task`, 
       data: nData,
       withCredentials: true, 
     }).then(response => {

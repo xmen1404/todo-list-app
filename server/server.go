@@ -75,6 +75,7 @@ func loadTaskList(userId string) ([]todoItem, error) {
 func corsAcessMiddleware(c *gin.Context) {
 	c.Writer.Header().Set("Access-Control-Allow-Origin", "http://localhost:3000")
 	c.Writer.Header().Set("Access-Control-Allow-Credentials", "true")
+	c.Next()
 }
 
 func authMiddleware(c *gin.Context) {
@@ -163,17 +164,17 @@ func loginHandler(c *gin.Context) {
 	password := c.PostForm("password")
 
 	rows, err := db.Query("SELECT * FROM userInfo WHERE username == " + "'" + username + "' AND password == '" + password + "';")
-	if err != nil {
+	if err != nil || rows == nil {
 		fmt.Println(err.Error(), "error with Select command")
 		c.String(http.StatusBadRequest, "Login failed")
 	}
-	if rows == nil {
+	if !rows.Next() {
 		c.String(http.StatusBadRequest, "Login failed")
 	} else {
-		rows.Next()
 		var userId, nUsername, nPassword string
 		rows.Scan(&userId, &nUsername, &nPassword)
 		fmt.Println(userId, nUsername, nPassword)
+		c.SetSameSite(http.SameSiteNoneMode)
 		c.SetCookie("authToken", userId, 1800, "/", "localhost", true, true)
 		c.String(http.StatusAccepted, "Login successfully")
 	}
@@ -249,11 +250,6 @@ func main() {
 		todoListRoutes.POST("/add-task", addTaskHandler)
 		todoListRoutes.POST("/change-task-status", changeStatusHandler)
 	}
-	// todoListRoutes.Use(authMiddleware)
-	// router.GET("/todo-list/get-task-list", getTodoList)
-	// router.POST("/todo-list/remove-task", removeTaskHandler)
-	// router.POST("/todo-list/add-task", addTaskHandler)
-	// router.POST("todo-list/change-task-status", changeStatusHandler)
 
-	router.Run("localhost:8000")
+	router.Run("0.0.0.0:8000")
 }
