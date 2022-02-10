@@ -27,6 +27,9 @@ type todoListStruct struct {
 var currentTodoList []todoItem = []todoItem{}
 var const_db_file string = "db.json"
 var db *sql.DB
+var CLIENT_DOMAIN string = "http://localhost"
+var CLIENT_PORT string = "3000"
+var CLIENT_URL string = CLIENT_DOMAIN + ":" + CLIENT_PORT
 
 // var userInfo map[string]string // temporary userId tracker
 
@@ -73,7 +76,7 @@ func loadTaskList(userId string) ([]todoItem, error) {
 }
 
 func corsAcessMiddleware(c *gin.Context) {
-	c.Writer.Header().Set("Access-Control-Allow-Origin", "http://localhost:3000")
+	c.Writer.Header().Set("Access-Control-Allow-Origin", CLIENT_URL)
 	c.Writer.Header().Set("Access-Control-Allow-Credentials", "true")
 	c.Next()
 }
@@ -175,7 +178,7 @@ func loginHandler(c *gin.Context) {
 		rows.Scan(&userId, &nUsername, &nPassword)
 		fmt.Println(userId, nUsername, nPassword)
 		c.SetSameSite(http.SameSiteNoneMode)
-		c.SetCookie("authToken", userId, 1800, "/", "localhost", true, true)
+		c.SetCookie("authToken", userId, 1800, "/", CLIENT_DOMAIN, true, true)
 		c.String(http.StatusAccepted, "Login successfully")
 	}
 	defer rows.Close()
@@ -233,7 +236,7 @@ func main() {
 	router := gin.Default()
 
 	corsConfig := cors.DefaultConfig()
-	corsConfig.AllowOrigins = []string{"http://localhost:3000"}
+	corsConfig.AllowOrigins = []string{CLIENT_URL}
 	corsConfig.AllowHeaders = []string{"Access-Control-Allow-Credentials", "Access-Control-Allow-Origin"}
 
 	router.Use(cors.New(corsConfig))
@@ -251,5 +254,5 @@ func main() {
 		todoListRoutes.POST("/change-task-status", changeStatusHandler)
 	}
 
-	router.Run("0.0.0.0:8000")
+	router.Run(":8000")
 }

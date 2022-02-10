@@ -79,7 +79,7 @@ const Login = () => {
             method: 'post', 
             url: `/login` , 
             data: new FormData( e.target ), 
-            withCredentials: true
+            withCredentials: true, 
           })
         .then(response => {
             console.log(response)
