@@ -1,0 +1,9 @@
+version: "3"
+services: 
+  server: 
+    image: xmen1404/todo-list-app-server
+    container_name: server
+  client:
+    image: xmen1404/todo-list-app-client
+    container_name: client
+  
