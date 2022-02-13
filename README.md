@@ -17,6 +17,7 @@ Runs the React app in the development mode.
 In the project directory, run: `docker-compose up`
 
 Separate image for server: xmen1404/todo-list-app-server
+
 Separate image for client: xmen1404/todo-list-app-client
 
 
