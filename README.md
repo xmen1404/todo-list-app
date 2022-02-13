@@ -12,4 +12,8 @@ Runs the server in the development mode.
 
 Runs the React app in the development mode.
 
+## Run app locally with docker-compose (requires install docker-compose beforehand)
+
+In the project directory, run: `docker-compose up`
+
 
