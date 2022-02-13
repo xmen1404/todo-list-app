@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react'
 import styled from "styled-components"
-import axios from 'axios'
+import axiosInstance from '../axiosInstance'
 import { useNavigate } from 'react-router-dom'
 
+// const { REACT_APP_SERVER_DOMAIN, NODE_ENV } = process.env
 
 const RegisterWrapper = styled.div`
   position: relative;
@@ -70,9 +71,9 @@ const Register = () => {
 
     const submitHandler = (e: any) => {
         e.preventDefault()
-        axios({
+        axiosInstance({
             method: 'post', 
-            url: 'http://localhost:8000/register', 
+            url: `/register`, 
             data: new FormData( e.target ), 
             withCredentials: true
           })

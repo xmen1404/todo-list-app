@@ -1,0 +1,16 @@
+version: "3"
+services: 
+  server: 
+    image: xmen1404/todo-list-app-server
+    container_name: server
+    command: go run server.go
+    ports:
+      - 8000:8000
+    
+  client:
+    image: xmen1404/todo-list-app-client
+    container_name: client
+    command: yarn start:prod
+    ports:
+      - 3000:3000
+  

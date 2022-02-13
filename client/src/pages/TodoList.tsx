@@ -1,9 +1,11 @@
 import { useEffect, useState } from 'react'
 import styled from "styled-components"
-import axios from 'axios'
+import axiosInstance from '../axiosInstance'
 import SendIcon from '@mui/icons-material/Send';
 import { TaskItem } from '../components/index'
 import { Navigate, useNavigate } from 'react-router-dom'
+
+// const { REACT_APP_SERVER_DOMAIN, NODE_ENV } = process.env
 
 const LayoutWrapper = styled.div`
   position: relative;
@@ -78,9 +80,9 @@ const TodoList = () => {
 
   const submitHandler = (e: any) => {
     e.preventDefault()
-    axios({
+    axiosInstance({
       method: 'post', 
-      url: 'http://localhost:8000/todo-list/add-task', 
+      url: `/todo-list/add-task`, 
       data: new FormData( e.target ), 
       withCredentials: true, 
       // headers:{Cookie:"029857ec-10c3-4ad3-881b-b82ebf3c9683"}
@@ -99,9 +101,9 @@ const TodoList = () => {
   }
 
   const loadData = () => {
-    axios({
+    axiosInstance({
       method: 'get', 
-      url: 'http://localhost:8000/todo-list/get-task-list', 
+      url: `/todo-list/get-task-list`, 
       // headers: { Access-Control-Allow-Origin: "https://amazing.site"}
       withCredentials: true
     })
