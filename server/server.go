@@ -114,6 +114,8 @@ func processDbStmt(statement string) error {
 	stmt, err := db.Prepare(statement)
 	if err == nil {
 		stmt.Exec()
+	} else {
+		fmt.Println("Process stmt error: ", err)
 	}
 	defer stmt.Close()
 	return err
@@ -212,24 +214,35 @@ func main() {
 		return
 	}
 
+	db, err = sql.Open("mysql", "root:root@/")
+	if err != nil {
+		fmt.Println("Error with login to db:", err.Error())
+		return
+	}
+
+	err = processDbStmt("CREATE DATABASE IF NOT EXISTS todo_list_app;")
+	if err != nil {
+		return
+	}
+	db.Close()
+
 	db, err = sql.Open("mysql", "root:root@/todo_list_app")
 	if err != nil {
 		fmt.Println("Error with login to db:", err.Error())
 		return
 	}
+
 	fmt.Println("Connected to mysql database")
 
 	defer db.Close()
 
 	err = processDbStmt("CREATE TABLE IF NOT EXISTS userinfo(id VARCHAR(100) PRIMARY KEY NOT NULL, username VARCHAR(100) NOT NULL, password VARCHAR(100) NOT NULL);")
 	if err != nil {
-		fmt.Println(err.Error())
 		return
 	}
 	fmt.Println("userinfo Table created")
 	err = processDbStmt("CREATE TABLE IF NOT EXISTS taskinfo(id VARCHAR(100) PRIMARY KEY NOT NULL, userid VARCHAR(100) NOT NULL, taskname VARCHAR(100) NOT NULL, taskstatus INT NOT NULL);")
 	if err != nil {
-		fmt.Println(err.Error())
 		return
 	}
 	fmt.Println("taskinfo table created")
