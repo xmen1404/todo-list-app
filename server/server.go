@@ -10,8 +10,8 @@ import (
 
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
+	_ "github.com/go-sql-driver/mysql"
 	"github.com/google/uuid"
-	_ "github.com/mattn/go-sqlite3"
 )
 
 type todoItem struct {
@@ -53,7 +53,7 @@ func loadTaskList(userId string) ([]todoItem, error) {
 	// taskName
 	// taskStatus
 
-	row, err := db.Query("SELECT * FROM taskInfo WHERE userId == '" + userId + "';")
+	row, err := db.Query("SELECT * FROM taskinfo WHERE userId = '" + userId + "';")
 	if err != nil {
 		fmt.Println(err.Error(), "load task list error")
 		return []todoItem{}, err
@@ -89,7 +89,7 @@ func authMiddleware(c *gin.Context) {
 		c.AbortWithStatus(http.StatusForbidden)
 	}
 
-	rows, err := db.Query("SELECT * FROM userInfo WHERE id == '" + authToken + "';")
+	rows, err := db.Query("SELECT * FROM userinfo WHERE id = '" + authToken + "';")
 	if err != nil {
 		fmt.Println(err.Error(), "error in query userInfo")
 		c.AbortWithStatus(http.StatusForbidden)
@@ -126,7 +126,7 @@ func addTaskHandler(c *gin.Context) {
 	nTaskId := uuid.New().String()
 	nTaskStatus := "0"
 
-	err := processDbStmt("INSERT INTO taskInfo VALUES ('" + nTaskId + "','" + authToken + "','" + nTaskName + "','" + nTaskStatus + "');")
+	err := processDbStmt("INSERT INTO taskinfo VALUES ('" + nTaskId + "','" + authToken + "','" + nTaskName + "','" + nTaskStatus + "');")
 	if err != nil {
 		fmt.Println(err.Error(), "error with inserting to db")
 		c.String(http.StatusBadRequest, "Cannot add task")
@@ -139,7 +139,7 @@ func addTaskHandler(c *gin.Context) {
 func removeTaskHandler(c *gin.Context) {
 	authToken, _ := c.Cookie("authToken")
 	nTaskID := c.PostForm("taskid")
-	err := processDbStmt("DELETE FROM taskInfo WHERE id == '" + nTaskID + "' AND userId == '" + authToken + "'")
+	err := processDbStmt("DELETE FROM taskinfo WHERE id = '" + nTaskID + "' AND userid = '" + authToken + "'")
 	if err != nil {
 		fmt.Println(err.Error(), "error with deleting from db")
 		c.String(http.StatusBadRequest, "Cannot delete task")
@@ -153,7 +153,7 @@ func changeStatusHandler(c *gin.Context) {
 	authToken, _ := c.Cookie("authToken")
 	nTaskID := c.PostForm("taskid")
 
-	err := processDbStmt("UPDATE taskInfo SET taskStatus = 1 - (SELECT taskStatus FROM taskInfo WHERE id == '" + nTaskID + "' AND userId == '" + authToken + "') " + "WHERE id == '" + nTaskID + "' AND userId == '" + authToken + "';")
+	err := processDbStmt("UPDATE taskinfo SET taskstatus = 1 - taskstatus " + "WHERE id = '" + nTaskID + "' AND userid = '" + authToken + "';")
 	if err != nil {
 		fmt.Println(err.Error(), "error with updating db")
 		c.String(http.StatusBadRequest, "Cannot change taskStatus")
@@ -166,7 +166,7 @@ func loginHandler(c *gin.Context) {
 	username := c.PostForm("username")
 	password := c.PostForm("password")
 
-	rows, err := db.Query("SELECT * FROM userInfo WHERE username == " + "'" + username + "' AND password == '" + password + "';")
+	rows, err := db.Query("SELECT * FROM userinfo WHERE username = " + "'" + username + "' AND password = '" + password + "';")
 	if err != nil || rows == nil {
 		fmt.Println(err.Error(), "error with Select command")
 		c.String(http.StatusBadRequest, "Login failed")
@@ -188,13 +188,13 @@ func registerHandler(c *gin.Context) {
 	username := c.PostForm("username")
 	password := c.PostForm("password")
 
-	rows, _ := db.Query("SELECT * FROM userInfo WHERE username == " + "'" + username + "';")
+	rows, _ := db.Query("SELECT * FROM userinfo WHERE username = " + "'" + username + "';")
 	if rows != nil && rows.Next() {
 		c.String(http.StatusBadRequest, "Username duplicated")
 		fmt.Print("username duplicated", rows.Next())
 	} else {
 		userId := uuid.New().String()
-		err := processDbStmt("INSERT INTO userInfo VALUES ('" + userId + "','" + username + "','" + password + "');")
+		err := processDbStmt("INSERT INTO userinfo VALUES ('" + userId + "','" + username + "','" + password + "');")
 		if err != nil {
 			fmt.Println(err.Error(), "error with insert registration info")
 			c.String(http.StatusBadRequest, "Cannot create account")
@@ -212,26 +212,27 @@ func main() {
 		return
 	}
 
-	db, err = sql.Open("sqlite3", "./sqlite.db")
+	db, err = sql.Open("mysql", "root:root@/todo_list_app")
 	if err != nil {
-		fmt.Println(err.Error())
+		fmt.Println("Error with login to db:", err.Error())
 		return
 	}
-	fmt.Println("Connected to sqlite database")
+	fmt.Println("Connected to mysql database")
+
 	defer db.Close()
 
-	err = processDbStmt("CREATE TABLE IF NOT EXISTS userInfo(id TEXT PRIMARY KEY NOT NULL, username TEXT NOT NULL, password TEXT NOT NULL);")
+	err = processDbStmt("CREATE TABLE IF NOT EXISTS userinfo(id VARCHAR(100) PRIMARY KEY NOT NULL, username VARCHAR(100) NOT NULL, password VARCHAR(100) NOT NULL);")
 	if err != nil {
 		fmt.Println(err.Error())
 		return
 	}
-	fmt.Println("UserInfo Table created")
-	err = processDbStmt("CREATE TABLE IF NOT EXISTS taskInfo(id TEXT PRIMARY KEY NOT NULL, userId TEXT NOT NULL, taskName TEXT NOT NULL, taskStatus INT NOT NULL);")
+	fmt.Println("userinfo Table created")
+	err = processDbStmt("CREATE TABLE IF NOT EXISTS taskinfo(id VARCHAR(100) PRIMARY KEY NOT NULL, userid VARCHAR(100) NOT NULL, taskname VARCHAR(100) NOT NULL, taskstatus INT NOT NULL);")
 	if err != nil {
 		fmt.Println(err.Error())
 		return
 	}
-	fmt.Println("TaskInfo table created")
+	fmt.Println("taskinfo table created")
 
 	router := gin.Default()
 
