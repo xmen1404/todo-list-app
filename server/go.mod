@@ -9,6 +9,7 @@ require (
 	github.com/go-playground/locales v0.13.0 // indirect
 	github.com/go-playground/universal-translator v0.17.0 // indirect
 	github.com/go-playground/validator/v10 v10.4.1 // indirect
+	github.com/go-sql-driver/mysql v1.6.0 // indirect
 	github.com/golang/protobuf v1.3.3 // indirect
 	github.com/google/uuid v1.3.0 // indirect
 	github.com/itsjamie/gin-cors v0.0.0-20160420130702-97b4a9da7933 // indirect

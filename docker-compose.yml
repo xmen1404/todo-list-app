@@ -1,12 +1,24 @@
 version: "3"
 services: 
+  db:
+    image: mysql
+    container_name: mysql
+    ports:
+      - 3306:3306
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: todo_list_app
+    
   server: 
     image: xmen1404/todo-list-app-server
     container_name: server
     command: go run server.go
     ports:
       - 8000:8000
-    
+    depends_on:
+      - db
+
   client:
     image: xmen1404/todo-list-app-client
     container_name: client
