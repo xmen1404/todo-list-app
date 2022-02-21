@@ -30,6 +30,11 @@ var db *sql.DB
 var CLIENT_DOMAIN string = "http://localhost"
 var CLIENT_PORT string = "3000"
 var CLIENT_URL string = CLIENT_DOMAIN + ":" + CLIENT_PORT
+var MYSQL_USERNAME string = "root"
+var MYSQL_PASSWORD string = "root"
+var MYSQL_HOST string = "mysql"
+var MYSQL_PORT string = "3306"
+var MYSQL_URL string = MYSQL_USERNAME + ":" + MYSQL_PASSWORD + "@tcp(" + MYSQL_HOST + ")"
 
 // var userInfo map[string]string // temporary userId tracker
 
@@ -213,20 +218,19 @@ func main() {
 		fmt.Println(err.Error())
 		return
 	}
+	// db, err = sql.Open("mysql", "root:root@tcp(mysql)/")
+	// if err != nil {
+	// 	fmt.Println("Error with login to db:", err.Error())
+	// 	return
+	// }
 
-	db, err = sql.Open("mysql", "root:root@/")
-	if err != nil {
-		fmt.Println("Error with login to db:", err.Error())
-		return
-	}
+	// err = processDbStmt("CREATE DATABASE IF NOT EXISTS todo_list_app;")
+	// if err != nil {
+	// 	return
+	// }
+	// db.Close()
 
-	err = processDbStmt("CREATE DATABASE IF NOT EXISTS todo_list_app;")
-	if err != nil {
-		return
-	}
-	db.Close()
-
-	db, err = sql.Open("mysql", "root:root@/todo_list_app")
+	db, err = sql.Open("mysql", "root:root@tcp(mysql)/todo_list_app") // root:root = user:password
 	if err != nil {
 		fmt.Println("Error with login to db:", err.Error())
 		return
